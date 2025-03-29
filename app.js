@@ -6,7 +6,6 @@ const { exec } = require('child_process');
 const schedule = require('node-schedule');
 const db = require('./_helpers/db'); 
 const path = require('path');
-
 const app = express();
 app.use(express.json());
 
@@ -84,6 +83,25 @@ app.get('/api/policy/aggregate', async (req, res) => {
         res.json({ summary: aggregation }); 
     } catch (error) {
         res.status(500).json({ message: "Error generating policy summary", error: error.message });
+    }
+});
+
+app.post("/api/schedule-message", async (req, res) => {
+    try {
+        const { message, day, time } = req.body;
+
+        if (!message || !day || !time) {
+            return res.status(400).json({ message: "Message, day, and time are required" });
+        }
+
+        const scheduleTime = new Date(`${day} ${time}`);
+        let ScheduledMessage = db.ScheduledMessage
+        const scheduledMessage = new ScheduledMessage({ message, scheduleTime });
+        await scheduledMessage.save();
+
+        res.status(201).json({ message: "Message scheduled successfully", scheduledMessage });
+    } catch (error) {
+        res.status(500).json({ message: "Error scheduling message", error: error.message });
     }
 });
 
